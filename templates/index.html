@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopus Chatbot | BC Web Wise</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- Chat Launcher -->
+<div class="chat-launcher" onclick="toggleChat()">
+    <i class="fa-solid fa-comments"></i>
+</div>
+
+<div class="chat-widget" id="chat-widget">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-avatar">
+            <span>🐙</span>
+        </div>
+        <div class="header-text">
+            <h2>Octopus</h2>
+            <p>You can ask me anything</p>
+        </div>
+        <div class="close-btn" onclick="toggleChat()">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+    </div>
+
+    <div id="chat-box">
+        <div class="message bot-msg">
+            Welcome to BC Web Wise, I am Octopus, our AI-powered chatbot. How can I assist you today?
+        </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typing" class="typing-indicator" style="display: none; padding: 0 20px 10px 25px; font-size: 11px; color: #999;">
+        Octopus is thinking...
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-container">
+        <div class="input-row">
+            <i class="fa-solid fa-microphone input-icon"></i>
+            <input type="text" id="user-input" placeholder="Type and press enter" autocomplete="off" />
+            <i class="fa-solid fa-paper-plane input-icon send-btn" onclick="sendMessage()"></i>
+        </div>
+        <div class="footer-text">
+            Powered by <span>OCTOPUS</span> (Beta)
+        </div>
+    </div>
+</div>
+
+<script>
+const userInput = document.getElementById("user-input");
+const chatBox = document.getElementById("chat-box");
+const chatWidget = document.getElementById("chat-widget");
+
+function toggleChat() {
+    if (chatWidget.style.display === "none" || chatWidget.style.display === "") {
+        chatWidget.style.display = "flex";
+    } else {
+        chatWidget.style.display = "none";
+    }
+}
+
+userInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+function sendMessage() {
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    // Add user message
+    addMessage("You", message, "user-msg");
+    userInput.value = "";
+    
+    const typingIndicator = document.getElementById("typing");
+    typingIndicator.style.display = "block";
+    
+    // Automatically scroll to bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        typingIndicator.style.display = "none";
+        addMessage("Octopus", data.reply, "bot-msg");
+    })
+    .catch(err => {
+        typingIndicator.style.display = "none";
+        addMessage("System", "Service unavailable. Please check your HF_API_KEY.", "bot-msg");
+    });
+}
+
+function addMessage(sender, text, className) {
+    const msg = document.createElement("div");
+    msg.className = `message ${className}`;
+    
+    // Simple formatting
+    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    msg.innerHTML = formattedText;
+    
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+</script>
+
+</body>
+</html>
